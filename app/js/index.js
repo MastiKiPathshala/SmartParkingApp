@@ -64,7 +64,7 @@ var app = {
         client.send(message);
     },
     checkAvailability: function(){
-        var currentDate = moment(new Date).format('YYYY-MM-DD HH:MM:SS')
+        var currentDate = moment(new Date).tz('Asia/Kolkata').format('YYYY-MM-DD HH:MM:SS')
         console.log(currentDate)
         data = JSON.stringify({"Requester": "APP","Timestamp": currentDate,"Userid":uuid});
         app.publishMsg(data); 
