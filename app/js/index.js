@@ -1,13 +1,47 @@
 var uuid;
-var wsbroker = "162.242.215.7";  //mqtt websocket enabled broker ip address
-var wsport = 9001 // port for above
-var client = new Paho.MQTT.Client(wsbroker, wsport,"myclientid_" + parseInt(Math.random() * 100, 10));
-
+var wsBroker = "128.199.173.29";  //mqtt websocket enabled broker ip address
+var dataPort = 9001    // Port for Data exchange
+var mgmtPort = 5000  // Port for contacting AAA server
+var client = new Paho.MQTT.Client (wsBroker, dataPort, "myclientid_" + parseInt(Math.random() * 100, 10));
+var token = '';
+var LoginScreen = $(".overlay");
 var app = {
+
+    login: function (){
+        var UserName = $("#UserName").val(),
+            password = $("#password").val();
+            console.log(UserName,password)
+        $.ajax({
+            type: "POST",
+            url: "http://" + wsBroker + ":" + mgmtPort + "/login",
+            timeout: 2000,
+            dataType : "json",
+            contentType :"application/x-www-form-urlencoded",
+            data: { "UserName": UserName, "password": password },
+            success: function(data) {
+                console.log("==>",data.statusresp);
+                console.log("<===>",data)
+                // alert(data.statusresp);
+                if(data.statusresp == "no existing user"){
+                    alert('error !! no existing user')
+                }
+                else if(data.statusresp == "wrong password"){
+                    alert('error !! wrong password')
+                }
+                else{
+                    token = data.token;
+                    app.MQTTInit();
+                }
+            },
+            error: function(err) {
+                alert('error !!');
+            }
+        });
+
+    },
 
     initialize: function() {
         uuid = this.generateUUID();
-        this.MQTTInit();
     },
 
     generateUUID: function () {
@@ -19,8 +53,13 @@ var app = {
         });
         return uuid;
     },
-
+    
     MQTTInit: function() {
+        LoginScreen.fadeOut(1000);
+        setTimeout(function(){
+            LoginScreen.css("z-index","-10");
+        },1000);
+        console.log("token :",token)
     	var options = {
             timeout: 3,
     	    onSuccess: function () {
@@ -32,12 +71,14 @@ var app = {
         	    client.onMessageArrived = function (message) {
                     console.log(message.payloadString) 
                     var msg = JSON.parse(message.payloadString)
-                    if(msg.Requester == "Analytics"){
-                        if(msg.Userid == uuid){
+                    if(msg.Requester == "Analytics") {
+                        if ((msg.Userid == uuid) && (msg.parking_lot_id == token)) {
                             alert("Parking space "+ msg.parking_id+" will be free in "+msg.wait_time+ " min(s)");
                         }    
                     }else if(msg.Requester == 'Device'){
-                        app.pageupdate(message); 
+                        if (msg.parking_lot_id == token) {
+                            app.pageupdate(message);
+                        } 
                     }else{
                         console.log(msg);
                         console.log("errorMessage format")
@@ -48,11 +89,11 @@ var app = {
     		    client.onConnectionLost = function (responseObject) {
     	      	    console.log("connection lost: " + responseObject.errorMessage);
     	    	};
-        	},
-	        onFailure: function (message) {
+            },
+	    onFailure: function (message) {
 	           console.log("Connection failed: " + message.errorMessage);
-	        }
-	    };
+	    }
+	};
     	
         client.connect(options);
     
@@ -66,7 +107,7 @@ var app = {
     checkAvailability: function(){
         var currentDate = moment(new Date).tz('Asia/Kolkata').format('YYYY-MM-DD HH:MM:SS')
         console.log(currentDate)
-        data = JSON.stringify({"Requester": "APP","Timestamp": currentDate,"Userid":uuid});
+        data = JSON.stringify({"Requester": "APP","Timestamp": currentDate,"Userid": uuid, "parkingLotId": token});
         app.publishMsg(data); 
            
     },
@@ -77,10 +118,9 @@ var app = {
         $.mobile.loading( "hide" );
         var parking_slot = document.getElementById("svg_"+(messagepayloadString.parking_id).toString());
 
-        if(messagepayloadString.parking_status == 0){
+        if (messagepayloadString.parking_status == 0) {
            parking_slot.setAttribute("fill", "green"); 
-        }
-        else if(messagepayloadString.parking_status == 1){
+        } else if (messagepayloadString.parking_status == 1) {
            parking_slot.setAttribute("fill", "red"); 
         }            
     },

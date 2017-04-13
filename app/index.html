@@ -8,12 +8,14 @@
     <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
     <link rel="stylesheet" type="text/css" href="css/index.css" />
     <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.js"></script>
     <script src="js/moment.js"></script>
     <script src="js/momentTZ.js"></script>
     
-    <title>Parking Map</title>
+    <title>IoT Training - Smart Parking Lot</title>
 </head>
 <style type="text/css">
     .custom-btn {
@@ -22,12 +24,44 @@
     .center-button{
         margin: 0 auto;
     }
+    .overlay {
+        position: fixed;
+        top:0;
+        left:0;
+        z-index: 10;
+        width:100%;
+        height:100%;
+        opacity:1;
+        background: #e6e6e6;
+        display:block; ;
+        /*background-image: url('assets/world-map-bg.png');*/
+        /*background-size: cover;*/
+    }
+    
 </style>
 <body>
     <div data-role="header" data-theme="b"> 
-        <h1><strong>Parking Map</strong></h1> 
+        <h1><strong>IoT Training - Smart Parking Lot</strong></h1> 
+    </div> 
+    <div class='overlay' id='auth-overlay'>
+        <h1 class="text-center" >Smart Parking App</h1>
+        <div class="container" >
+            <div class="row " style="padding-top:100px;">
+                <div class="col-md-4 col-md-offset-4" style="text-align:center;">
+                    <form >
+                        <div class="form-group">
+                            <input type="text" class="form-control" id="UserName" name="UserName" placeholder="User Name" required />
+                            <br/>
+                            <input type="text" class="form-control" id="password" name="password" placeholder="Password" required />
+                            <br/>
+                            <input type="button" id="login"  class="btn btn-primary btn-block" value="login" onclick="app.login()"/>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>   
-    <div class="container"></br>
+    <div class="container"><br>
         <a data-role="button" class="custom-btn center-button" data-theme="b" onclick="app.checkAvailability()">Check Availability</a> 
         <p class="exit" align="center"><strong>EXIT</strong> <br>
             <svg width="300" height="430" xmlns="http://www.w3.org/2000/svg">
